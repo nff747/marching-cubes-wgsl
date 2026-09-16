@@ -7,6 +7,7 @@
 export * from './types';
 export * from './tables/marchingTables';
 export * from './utils/math';
+export * from './utils/noise';
 export * from './core/CPUReferenceMarcher';
 export * from './core/MarchingCubesExtractor';
 export * from './core/ThreeMeshAdapter';
