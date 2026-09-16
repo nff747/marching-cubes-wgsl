@@ -164,3 +164,18 @@ npm run benchmark
 ## 📜 License
 
 MIT &copy; 2026 [nff747](https://github.com/nff747). Authored with high-performance WebGPU graphics architectures.
+
+### 4. Procedural Volumetric Noise Fields
+
+```typescript
+import { SimplexNoise3D, CPUReferenceMarcher } from 'marching-cubes-wgsl';
+
+const noise = new SimplexNoise3D(42);
+const mesh = CPUReferenceMarcher.extractMesh(
+  (x, y, z) => noise.fbm(x * 2.0, y * 2.0, z * 2.0, 4),
+  [32, 32, 32],
+  [-1, -1, -1],
+  [1, 1, 1],
+  0.2
+);
+```
