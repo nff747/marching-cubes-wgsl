@@ -5,6 +5,7 @@ import {
   MarchingMath,
   CPUReferenceMarcher,
   MarchingCubesExtractor,
+  SimplexNoise3D,
   densityFieldShader,
   marchingCubesShader,
 } from '../src/index';
@@ -114,5 +115,27 @@ describe('MarchingCubesExtractor & WGSL Shader Integrity', () => {
     expect(marchingCubesShader).toContain('fn main');
     expect(marchingCubesShader).toContain('atomicAdd');
     expect(marchingCubesShader).toContain('VertexOutput');
+  });
+});
+
+describe('SimplexNoise3D Procedural Volumetric Fields', () => {
+  it('should generate bounded continuous scalar field in [-1, 1]', () => {
+    const noise = new SimplexNoise3D(12345);
+    for (let x = -1; x <= 1; x += 0.5) {
+      for (let y = -1; y <= 1; y += 0.5) {
+        for (let z = -1; z <= 1; z += 0.5) {
+          const val = noise.sample(x, y, z);
+          expect(val).toBeGreaterThanOrEqual(-1.5);
+          expect(val).toBeLessThanOrEqual(1.5);
+        }
+      }
+    }
+  });
+
+  it('should produce multi-octave FBM turbulence field', () => {
+    const noise = new SimplexNoise3D(999);
+    const fbmVal = noise.fbm(0.2, 0.4, 0.6, 4);
+    expect(typeof fbmVal).toBe('number');
+    expect(Number.isFinite(fbmVal)).toBe(true);
   });
 });
