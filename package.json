@@ -1,0 +1,37 @@
+{
+  "name": "marching-cubes-wgsl",
+  "version": "1.0.0",
+  "description": "Real-Time GPU Marching Cubes & Isosurface Extraction Engine in WebGPU / WGSL",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "benchmark": "npx tsx scripts/benchmark.ts"
+  },
+  "keywords": [
+    "webgpu",
+    "wgsl",
+    "marching-cubes",
+    "isosurface",
+    "surface-reconstruction",
+    "metaballs",
+    "dual-contouring",
+    "compute-shaders",
+    "threejs",
+    "voxel",
+    "3d-graphics"
+  ],
+  "author": "nff747 <nff747@users.noreply.github.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  },
+  "peerDependencies": {
+    "@webgpu/types": "^0.1.40"
+  }
+}
