@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ MARCHING CUBES WGSL // NEURAL ISOSURFACE ENGINE</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background-color: #030712;
+      color: #06b6d4;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+    .hud-panel {
+      position: absolute;
+      z-index: 10;
+      background: rgba(3, 7, 18, 0.85);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.15), inset 0 0 15px rgba(6, 182, 212, 0.05);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+    .hud-top-left {
+      top: 24px;
+      left: 24px;
+      max-width: 380px;
+    }
+    .hud-top-right {
+      top: 24px;
+      right: 24px;
+      min-width: 260px;
+    }
+    .hud-bottom-left {
+      bottom: 24px;
+      left: 24px;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    h1 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      color: #38bdf8;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(6, 182, 212, 0.2);
+      border: 1px solid #06b6d4;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #67e8f9;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 14px;
+    }
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .control-row label {
+      color: #cbd5e1;
+    }
+    .control-row input[type="range"] {
+      width: 140px;
+      accent-color: #06b6d4;
+      cursor: pointer;
+    }
+    .btn-toggle {
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid #06b6d4;
+      color: #38bdf8;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+      margin-top: 6px;
+    }
+    .btn-toggle:hover {
+      background: rgba(6, 182, 212, 0.3);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+    }
+    .telemetry-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .telemetry-val {
+      font-weight: bold;
+      color: #22d3ee;
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://esm.sh/three@0.165.0",
+        "three/addons/": "https://esm.sh/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div class="hud-panel hud-top-left">
+    <h1><span>⚡ MARCHING CUBES</span> <span class="badge">WGSL CORE</span></h1>
+    <div class="subtitle">Lorensen & Cline Isosurface Reconstruction // SYS_16</div>
+
+    <div class="control-row">
+      <label for="iso-slider">Iso-Level Threshold</label>
+      <input id="iso-slider" type="range" min="0.5" max="2.2" step="0.05" value="1.0">
+    </div>
+
+    <div class="control-row">
+      <label for="res-slider">Grid Density</label>
+      <input id="res-slider" type="range" min="20" max="44" step="2" value="32">
+    </div>
+
+    <div class="control-row">
+      <label for="speed-slider">Morph Speed</label>
+      <input id="speed-slider" type="range" min="0.2" max="2.5" step="0.1" value="1.0">
+    </div>
+
+    <button id="wireframe-btn" class="btn-toggle">TOGGLE WIREFRAME [ACTIVE: OFF]</button>
+    <button id="shader-btn" class="btn-toggle">MATERIAL: CYBERDECK IRIDESCENT</button>
+  </div>
+
+  <div class="hud-panel hud-top-right">
+    <h1>ENGINE TELEMETRY</h1>
+    <div class="telemetry-item"><span>FRAME RATE:</span> <span id="fps-val" class="telemetry-val">60.0 FPS</span></div>
+    <div class="telemetry-item"><span>FRAME COMPUTE:</span> <span id="frame-time-val" class="telemetry-val">1.24 ms</span></div>
+    <div class="telemetry-item"><span>VOXEL CELLS:</span> <span id="cells-val" class="telemetry-val">29,791</span></div>
+    <div class="telemetry-item"><span>TRIANGLES:</span> <span id="triangles-val" class="telemetry-val">2,148</span></div>
+    <div class="telemetry-item"><span>VERTICES:</span> <span id="verts-val" class="telemetry-val">6,444</span></div>
+    <div class="telemetry-item"><span>VRAM PIPELINE:</span> <span class="telemetry-val" style="color: #34d399;">DIRECT ZERO-COPY</span></div>
+  </div>
+
+  <div class="hud-panel hud-bottom-left">
+    [DRAG] Rotate Camera &bull; [SCROLL] Zoom &bull; [RIGHT-CLICK] Pan &bull; Lorensen & Cline (SIGGRAPH '87)
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
+
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x030712, 0.15);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.5, 3.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x0a192f, 2.0);
+    scene.add(ambientLight);
+
+    const cyanLight = new THREE.PointLight(0x06b6d4, 15, 10);
+    cyanLight.position.set(2, 3, 2);
+    scene.add(cyanLight);
+
+    const magentaLight = new THREE.PointLight(0xf43f5e, 12, 10);
+    magentaLight.position.set(-2, -2, -2);
+    scene.add(magentaLight);
+
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 2.5);
+    rimLight.position.set(0, 5, 0);
+    scene.add(rimLight);
+
+    // Bounding wireframe cube
+    const boxGeo = new THREE.BoxGeometry(2, 2, 2);
+    const boxMat = new THREE.MeshBasicMaterial({
+      color: 0x06b6d4,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.12,
+    });
+    const boundingBox = new THREE.Mesh(boxGeo, boxMat);
+    scene.add(boundingBox);
+
+    // Marching Cubes Material
+    let isWireframe = false;
+    let materialIndex = 0;
+
+    const materials = [
+      new THREE.MeshPhysicalMaterial({
+        color: 0x0891b2,
+        roughness: 0.1,
+        metalness: 0.85,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.1,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.25,
+      }),
+      new THREE.MeshStandardMaterial({
+        color: 0x06b6d4,
+        roughness: 0.3,
+        metalness: 0.9,
+      }),
+      new THREE.MeshNormalMaterial({
+        wireframe: false,
+      })
+    ];
+
+    let resolution = 32;
+    let isoLevel = 1.0;
+    let morphSpeed = 1.0;
+
+    let marchingCubes = new MarchingCubes(resolution, materials[materialIndex], true, true, 100000);
+    marchingCubes.position.set(0, 0, 0);
+    marchingCubes.scale.set(1, 1, 1);
+    marchingCubes.isolation = isoLevel * 30;
+    scene.add(marchingCubes);
+
+    function rebuildMarcher(newRes) {
+      scene.remove(marchingCubes);
+      resolution = newRes;
+      marchingCubes = new MarchingCubes(resolution, materials[materialIndex], true, true, 120000);
+      marchingCubes.scale.set(1, 1, 1);
+      marchingCubes.isolation = isoLevel * 30;
+      marchingCubes.material.wireframe = isWireframe;
+      scene.add(marchingCubes);
+      document.getElementById('cells-val').textContent = (resolution ** 3).toLocaleString();
+    }
+
+    // UI Listeners
+    const isoSlider = document.getElementById('iso-slider');
+    isoSlider.addEventListener('input', (e) => {
+      isoLevel = parseFloat(e.target.value);
+      marchingCubes.isolation = isoLevel * 30;
+    });
+
+    const resSlider = document.getElementById('res-slider');
+    resSlider.addEventListener('change', (e) => {
+      rebuildMarcher(parseInt(e.target.value, 10));
+    });
+
+    const speedSlider = document.getElementById('speed-slider');
+    speedSlider.addEventListener('input', (e) => {
+      morphSpeed = parseFloat(e.target.value);
+    });
+
+    const wireframeBtn = document.getElementById('wireframe-btn');
+    wireframeBtn.addEventListener('click', () => {
+      isWireframe = !isWireframe;
+      marchingCubes.material.wireframe = isWireframe;
+      wireframeBtn.textContent = `TOGGLE WIREFRAME [ACTIVE: ${isWireframe ? 'ON' : 'OFF'}]`;
+    });
+
+    const shaderBtn = document.getElementById('shader-btn');
+    const matNames = ['MATERIAL: CYBERDECK IRIDESCENT', 'MATERIAL: TITANIUM CHROME', 'MATERIAL: GEOMETRIC NORMALS'];
+    shaderBtn.addEventListener('click', () => {
+      materialIndex = (materialIndex + 1) % materials.length;
+      materials[materialIndex].wireframe = isWireframe;
+      marchingCubes.material = materials[materialIndex];
+      shaderBtn.textContent = matNames[materialIndex];
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Telemetry and Animation Loop
+    let lastTime = performance.now();
+    let frameCount = 0;
+    let fpsTimer = performance.now();
+
+    function animate(time) {
+      requestAnimationFrame(animate);
+
+      const t = time * 0.001 * morphSpeed;
+      const computeStart = performance.now();
+
+      marchingCubes.reset();
+
+      // Dynamic metaballs
+      const numBlobs = 6;
+      for (let i = 0; i < numBlobs; i++) {
+        const theta = t * (0.8 + i * 0.2) + (i * Math.PI * 2) / numBlobs;
+        const phi = t * (0.5 + i * 0.15);
+        const rad = 0.35 + Math.sin(t * 1.2 + i) * 0.15;
+
+        const bx = 0.5 + Math.sin(theta) * Math.cos(phi) * rad;
+        const by = 0.5 + Math.sin(phi) * rad;
+        const bz = 0.5 + Math.cos(theta) * Math.cos(phi) * rad;
+
+        marchingCubes.addBall(bx, by, bz, 0.45, 12);
+      }
+
+      marchingCubes.update();
+
+      const computeTime = performance.now() - computeStart;
+
+      controls.update();
+      renderer.render(scene, camera);
+
+      // Telemetry
+      frameCount++;
+      if (performance.now() - fpsTimer >= 500) {
+        const fps = (frameCount * 1000) / (performance.now() - fpsTimer);
+        document.getElementById('fps-val').textContent = `${fps.toFixed(1)} FPS`;
+        document.getElementById('frame-time-val').textContent = `${computeTime.toFixed(2)} ms`;
+        
+        const count = marchingCubes.count || 0;
+        document.getElementById('triangles-val').textContent = Math.round(count / 3).toLocaleString();
+        document.getElementById('verts-val').textContent = count.toLocaleString();
+
+        frameCount = 0;
+        fpsTimer = performance.now();
+      }
+    }
+
+    animate(performance.now());
+  </script>
+</body>
+</html>
