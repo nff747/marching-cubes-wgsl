@@ -33,5 +33,9 @@
   },
   "peerDependencies": {
     "@webgpu/types": "^0.1.40"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nff747/marching-cubes-wgsl.git"
   }
 }
