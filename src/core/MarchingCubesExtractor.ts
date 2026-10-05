@@ -164,4 +164,27 @@ export class MarchingCubesExtractor {
   public getVertexBuffer(): GPUBuffer | null {
     return this.outVerticesBuffer;
   }
+
+  public dispose(): void {
+    if (this.paramsUniformBuffer) {
+      this.paramsUniformBuffer.destroy();
+      this.paramsUniformBuffer = null;
+    }
+    if (this.edgeTableBuffer) {
+      this.edgeTableBuffer.destroy();
+      this.edgeTableBuffer = null;
+    }
+    if (this.triTableBuffer) {
+      this.triTableBuffer.destroy();
+      this.triTableBuffer = null;
+    }
+    if (this.atomicCounterBuffer) {
+      this.atomicCounterBuffer.destroy();
+      this.atomicCounterBuffer = null;
+    }
+    if (this.outVerticesBuffer) {
+      this.outVerticesBuffer.destroy();
+      this.outVerticesBuffer = null;
+    }
+  }
 }
