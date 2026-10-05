@@ -25,7 +25,7 @@
     "3d-graphics"
   ],
   "author": "nff747 <nff747@users.noreply.github.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@types/node": "^20.14.2",
     "typescript": "^5.4.5",
