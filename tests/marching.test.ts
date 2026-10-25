@@ -124,7 +124,34 @@ describe('CPUReferenceMarcher Isosurface Extraction', () => {
       expect(len).toBeCloseTo(1.0, 1);
     }
   });
+
+  it('should compute valid mesh surface area and tight bounding box', () => {
+    const targetRadius = 0.5;
+    const sphereField = (x: number, y: number, z: number) => targetRadius - Math.hypot(x, y, z);
+    const mesh = CPUReferenceMarcher.extractMesh(
+      sphereField,
+      [24, 24, 24],
+      [-0.8, -0.8, -0.8],
+      [0.8, 0.8, 0.8],
+      0.0
+    );
+
+    // Theoretical sphere surface area: 4 * PI * r^2 = 4 * PI * 0.25 = PI (~3.14159)
+    const area = CPUReferenceMarcher.computeSurfaceArea(mesh);
+    expect(area).toBeGreaterThan(2.5);
+    expect(area).toBeLessThan(3.5);
+
+    // Tight bounding box should enclose the sphere in [-0.5, 0.5]
+    const bbox = CPUReferenceMarcher.computeBoundingBox(mesh);
+    expect(bbox.min[0]).toBeCloseTo(-0.5, 1);
+    expect(bbox.max[0]).toBeCloseTo(0.5, 1);
+    expect(bbox.min[1]).toBeCloseTo(-0.5, 1);
+    expect(bbox.max[1]).toBeCloseTo(0.5, 1);
+    expect(bbox.min[2]).toBeCloseTo(-0.5, 1);
+    expect(bbox.max[2]).toBeCloseTo(0.5, 1);
+  });
 });
+
 
 describe('MarchingCubesExtractor & WGSL Shader Integrity', () => {
   it('should instantiate MarchingCubesExtractor with default grid settings', () => {
