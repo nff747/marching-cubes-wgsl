@@ -132,4 +132,48 @@ export class SimplexNoise3D {
 
     return total / maxValue;
   }
+
+  /**
+   * Billow noise: absolute value of noise produces billowy, puffy organic volumetric fields.
+   */
+  public billow(x: number, y: number, z: number, octaves: number = 4, lacunarity: number = 2.0, gain: number = 0.5): number {
+    let total = 0.0;
+    let frequency = 1.0;
+    let amplitude = 1.0;
+    let maxValue = 0.0;
+
+    for (let i = 0; i < octaves; i++) {
+      total += (Math.abs(this.sample(x * frequency, y * frequency, z * frequency)) * 2.0 - 1.0) * amplitude;
+      maxValue += amplitude;
+      frequency *= lacunarity;
+      amplitude *= gain;
+    }
+
+    return total / maxValue;
+  }
+
+  /**
+   * Ridged multifractal noise: inverted absolute value creates sharp mountain ridges and organic creases.
+   */
+  public ridged(x: number, y: number, z: number, octaves: number = 4, lacunarity: number = 2.0, gain: number = 0.5): number {
+    let total = 0.0;
+    let frequency = 1.0;
+    let amplitude = 1.0;
+    let maxValue = 0.0;
+    let weight = 1.0;
+
+    for (let i = 0; i < octaves; i++) {
+      let signal = 1.0 - Math.abs(this.sample(x * frequency, y * frequency, z * frequency));
+      signal = signal * signal * weight;
+      weight = Math.max(0.0, Math.min(1.0, signal * 2.0));
+
+      total += signal * amplitude;
+      maxValue += amplitude;
+      frequency *= lacunarity;
+      amplitude *= gain;
+    }
+
+    return total / maxValue;
+  }
 }
+
