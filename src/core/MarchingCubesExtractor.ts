@@ -165,6 +165,30 @@ export class MarchingCubesExtractor {
     return this.outVerticesBuffer;
   }
 
+  /**
+   * Calculates total VRAM in bytes allocated for parameters, tables, atomic counters, and vertex output.
+   * Vertex buffer uses 32 bytes per vertex (positions float3 + normals float3 + 8-byte padding).
+   */
+  public calculateVRAMBytes(): number {
+    const uniformBytes = 48;
+    const edgeTableBytes = 256 * 4; // 1024 bytes
+    const triTableBytes = 256 * 16 * 4; // 16384 bytes
+    const atomicCounterBytes = 4; // 1 uint32
+    const vertexBufferBytes = this.config.maxVertices * 32; // 32 bytes / vertex
+    return uniformBytes + edgeTableBytes + triTableBytes + atomicCounterBytes + vertexBufferBytes;
+  }
+
+  /**
+   * Calculates 3D compute workgroups dispatch dimensions given current grid size.
+   * Workgroups use 8x8x8 invocations per block.
+   */
+  public calculateWorkgroups(): [number, number, number] {
+    const wgX = Math.ceil((this.config.gridSize[0] - 1) / 8);
+    const wgY = Math.ceil((this.config.gridSize[1] - 1) / 8);
+    const wgZ = Math.ceil((this.config.gridSize[2] - 1) / 8);
+    return [wgX, wgY, wgZ];
+  }
+
   public dispose(): void {
     if (this.paramsUniformBuffer) {
       this.paramsUniformBuffer.destroy();
@@ -188,3 +212,4 @@ export class MarchingCubesExtractor {
     }
   }
 }
+
