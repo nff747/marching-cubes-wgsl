@@ -116,4 +116,50 @@ export class CPUReferenceMarcher {
       triangleCount: vertexCount / 3,
     };
   }
+
+  /**
+   * Computes total extracted surface area of an extracted MarchingMesh.
+   */
+  public static computeSurfaceArea(mesh: MarchingMesh): number {
+    let totalArea = 0.0;
+    const pos = mesh.positions;
+    for (let i = 0; i < pos.length; i += 9) {
+      const v0: [number, number, number] = [pos[i], pos[i + 1], pos[i + 2]];
+      const v1: [number, number, number] = [pos[i + 3], pos[i + 4], pos[i + 5]];
+      const v2: [number, number, number] = [pos[i + 6], pos[i + 7], pos[i + 8]];
+      totalArea += MarchingMath.computeTriangleArea(v0, v1, v2);
+    }
+    return totalArea;
+  }
+
+  /**
+   * Computes tight axis-aligned bounding box [min, max] enclosing all vertices in the extracted mesh.
+   */
+  public static computeBoundingBox(mesh: MarchingMesh): { min: [number, number, number]; max: [number, number, number] } {
+    if (mesh.vertexCount === 0) {
+      return { min: [0, 0, 0], max: [0, 0, 0] };
+    }
+    const pos = mesh.positions;
+    let minX = pos[0], maxX = pos[0];
+    let minY = pos[1], maxY = pos[1];
+    let minZ = pos[2], maxZ = pos[2];
+
+    for (let i = 3; i < pos.length; i += 3) {
+      const x = pos[i];
+      const y = pos[i + 1];
+      const z = pos[i + 2];
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
+    }
+
+    return {
+      min: [minX, minY, minZ],
+      max: [maxX, maxY, maxZ],
+    };
+  }
 }
+
