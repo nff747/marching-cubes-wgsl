@@ -160,7 +160,24 @@ describe('MarchingCubesExtractor & WGSL Shader Integrity', () => {
     expect(extractor.config.isoLevel).toBe(1.2);
   });
 
+  it('should compute accurate GPU VRAM memory requirements and 3D workgroups', () => {
+    const extractor = new MarchingCubesExtractor({
+      gridSize: [49, 49, 49],
+      maxVertices: 100_000,
+    });
+
+    // 48 + 1024 + 16384 + 4 + 100000 * 32 = 17460 + 3200000 = 3217460 bytes
+    const vramBytes = extractor.calculateVRAMBytes();
+    expect(vramBytes).toBe(3217460);
+
+    // Grid size [49, 49, 49]: cells = 48x48x48.
+    // 48 / 8 = 6 workgroups in each dimension
+    const workgroups = extractor.calculateWorkgroups();
+    expect(workgroups).toEqual([6, 6, 6]);
+  });
+
   it('should contain valid WGSL compute entrypoints and shader symbols', () => {
+
     expect(densityFieldShader).toContain('sampleMetaballs');
     expect(densityFieldShader).toContain('calcDensityGradient');
 
