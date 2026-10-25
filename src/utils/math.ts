@@ -82,4 +82,61 @@ export class MarchingMath {
     if (len < 1e-7) return [0, 1, 0];
     return [-dx / len, -dy / len, -dz / len];
   }
+
+  /**
+   * Evaluates signed distance / density for a 3D torus centered at origin.
+   * R is major radius (distance from center of tube to center of torus),
+   * r is minor radius (radius of the tube).
+   */
+  public static sampleTorus(
+    x: number,
+    y: number,
+    z: number,
+    majorRadius: number = 0.5,
+    minorRadius: number = 0.2
+  ): number {
+    const qx = Math.hypot(x, z) - majorRadius;
+    const dist = Math.hypot(qx, y) - minorRadius;
+    return -dist; // Positive inside, negative outside
+  }
+
+  /**
+   * Computes the 3D surface area of a triangle formed by three vertices [v0, v1, v2].
+   * Uses half the cross product magnitude: 0.5 * ||(v1 - v0) x (v2 - v0)||.
+   */
+  public static computeTriangleArea(
+    v0: [number, number, number],
+    v1: [number, number, number],
+    v2: [number, number, number]
+  ): number {
+    const e1x = v1[0] - v0[0];
+    const e1y = v1[1] - v0[1];
+    const e1z = v1[2] - v0[2];
+
+    const e2x = v2[0] - v0[0];
+    const e2y = v2[1] - v0[1];
+    const e2z = v2[2] - v0[2];
+
+    const cx = e1y * e2z - e1z * e2y;
+    const cy = e1z * e2x - e1x * e2z;
+    const cz = e1x * e2y - e1y * e2x;
+
+    return 0.5 * Math.hypot(cx, cy, cz);
+  }
+
+  /**
+   * Checks whether a point (x, y, z) lies within an axis-aligned bounding box [min, max].
+   */
+  public static isInsideBBox(
+    point: [number, number, number],
+    min: [number, number, number],
+    max: [number, number, number]
+  ): boolean {
+    return (
+      point[0] >= min[0] && point[0] <= max[0] &&
+      point[1] >= min[1] && point[1] <= max[1] &&
+      point[2] >= min[2] && point[2] <= max[2]
+    );
+  }
 }
+
