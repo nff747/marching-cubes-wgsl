@@ -48,7 +48,33 @@ describe('MarchingMath Linear Interpolation & Gradients', () => {
     expect(normal[1]).toBeCloseTo(0.0, 2);
     expect(normal[2]).toBeCloseTo(0.0, 2);
   });
+
+  it('should evaluate torus scalar field, triangle area, and bounding box containment', () => {
+    // Torus field: major R=0.5, minor r=0.2
+    // Core of tube at [0.5, 0, 0]: distance to tube center is 0, dist to boundary is -0.2 => density is +0.2
+    const insideTube = MarchingMath.sampleTorus(0.5, 0.0, 0.0, 0.5, 0.2);
+    expect(insideTube).toBeCloseTo(0.2, 5);
+
+    // Origin [0, 0, 0]: distance to tube is hypot(0.5, 0) - 0.2 = 0.3 => density is -0.3
+    const originHole = MarchingMath.sampleTorus(0.0, 0.0, 0.0, 0.5, 0.2);
+    expect(originHole).toBeCloseTo(-0.3, 5);
+
+    // Triangle area: right triangle with legs of length 2 and 3 -> area = 0.5 * 2 * 3 = 3.0
+    const v0: [number, number, number] = [0, 0, 0];
+    const v1: [number, number, number] = [2, 0, 0];
+    const v2: [number, number, number] = [0, 3, 0];
+    const area = MarchingMath.computeTriangleArea(v0, v1, v2);
+    expect(area).toBeCloseTo(3.0, 5);
+
+    // Bounding box checks
+    const min: [number, number, number] = [-1, -1, -1];
+    const max: [number, number, number] = [1, 1, 1];
+    expect(MarchingMath.isInsideBBox([0, 0, 0], min, max)).toBe(true);
+    expect(MarchingMath.isInsideBBox([2, 0, 0], min, max)).toBe(false);
+    expect(MarchingMath.isInsideBBox([1, 1, 1], min, max)).toBe(true);
+  });
 });
+
 
 describe('CPUReferenceMarcher Isosurface Extraction', () => {
   it('should extract a spherical isosurface with vertices lying on the sphere radius', () => {
