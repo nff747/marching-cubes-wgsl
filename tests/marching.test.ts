@@ -237,5 +237,21 @@ describe('SimplexNoise3D Procedural Volumetric Fields', () => {
     expect(clamped.triangleCount).toBe(1);
     expect(clamped.positions.length).toBe(9); // 3 vertices * 3 coords
   });
+
+  it('should evaluate billow and ridged multifractal procedural fields', () => {
+    const noise = new SimplexNoise3D(777);
+
+    // Billow noise evaluation
+    const billowVal = noise.billow(0.1, 0.2, 0.3, 4);
+    expect(typeof billowVal).toBe('number');
+    expect(Number.isFinite(billowVal)).toBe(true);
+
+    // Ridged multifractal evaluation
+    const ridgedVal = noise.ridged(0.1, 0.2, 0.3, 4);
+    expect(typeof ridgedVal).toBe('number');
+    expect(Number.isFinite(ridgedVal)).toBe(true);
+    expect(ridgedVal).toBeGreaterThanOrEqual(0.0);
+  });
 });
+
 
