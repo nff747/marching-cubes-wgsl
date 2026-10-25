@@ -33,4 +33,31 @@ export class ThreeMeshAdapter {
       },
     };
   }
+
+  /**
+   * Validates whether a target buffer has sufficient byte length to hold the extracted mesh.
+   */
+  public static validateBufferCapacity(mesh: MarchingMesh, capacityVertices: number): boolean {
+    return mesh.vertexCount <= capacityVertices;
+  }
+
+  /**
+   * Returns a sliced view of MarchingMesh clamped to the maximum allowed vertex capacity.
+   */
+  public static clampMeshToCapacity(mesh: MarchingMesh, maxVertices: number): MarchingMesh {
+    if (mesh.vertexCount <= maxVertices) {
+      return mesh;
+    }
+    const clampedTriangles = Math.floor(maxVertices / 3);
+    const clampedVertices = clampedTriangles * 3;
+    const clampedFloats = clampedVertices * 3;
+
+    return {
+      positions: mesh.positions.subarray(0, clampedFloats),
+      normals: mesh.normals.subarray(0, clampedFloats),
+      vertexCount: clampedVertices,
+      triangleCount: clampedTriangles,
+    };
+  }
 }
+
