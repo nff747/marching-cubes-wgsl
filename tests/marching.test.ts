@@ -5,10 +5,12 @@ import {
   MarchingMath,
   CPUReferenceMarcher,
   MarchingCubesExtractor,
+  ThreeMeshAdapter,
   SimplexNoise3D,
   densityFieldShader,
   marchingCubesShader,
 } from '../src/index';
+
 
 describe('Marching Cubes Canonical Lookup Tables', () => {
   it('should have valid 256 entries for edge table with 0 at boundaries', () => {
@@ -208,4 +210,32 @@ describe('SimplexNoise3D Procedural Volumetric Fields', () => {
     expect(typeof fbmVal).toBe('number');
     expect(Number.isFinite(fbmVal)).toBe(true);
   });
+
+  it('should validate buffer capacity and clamp mesh to maximum allowed vertices', () => {
+    // Generate sample mesh with 6 vertices (2 triangles)
+    const positions = new Float32Array([
+      0, 0, 0, 1, 0, 0, 0, 1, 0,
+      1, 0, 0, 1, 1, 0, 0, 1, 0,
+    ]);
+    const normals = new Float32Array([
+      0, 0, 1, 0, 0, 1, 0, 0, 1,
+      0, 0, 1, 0, 0, 1, 0, 0, 1,
+    ]);
+    const mesh = {
+      positions,
+      normals,
+      vertexCount: 6,
+      triangleCount: 2,
+    };
+
+    expect(ThreeMeshAdapter.validateBufferCapacity(mesh, 6)).toBe(true);
+    expect(ThreeMeshAdapter.validateBufferCapacity(mesh, 3)).toBe(false);
+
+    // Clamping to 4 vertices should truncate to 3 (1 full triangle)
+    const clamped = ThreeMeshAdapter.clampMeshToCapacity(mesh, 4);
+    expect(clamped.vertexCount).toBe(3);
+    expect(clamped.triangleCount).toBe(1);
+    expect(clamped.positions.length).toBe(9); // 3 vertices * 3 coords
+  });
 });
+
