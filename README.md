@@ -1,5 +1,7 @@
 # ⚡ Marching Cubes WGSL
 
+[![Lunar Paradox](https://img.shields.io/badge/Organization-Lunar_Paradox-0a0e1a?style=for-the-badge&logo=probot&logoColor=d7b886)](https://lunarparadox.com)
+
 ![Marching Cubes WGSL](assets/banner.jpg)
 
 > **High-Performance WebGPU Parallel Marching Cubes & Isosurface Extraction Engine**  
@@ -179,3 +181,7 @@ const mesh = CPUReferenceMarcher.extractMesh(
   0.2
 );
 ```
+
+---
+
+*A component of the [Lunar Paradox](https://lunarparadox.com) applied systems & graphics laboratory. Engineered by nff747.*
